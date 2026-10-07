@@ -1,0 +1,1 @@
+# Fungal-Lesion-Detection-on-Apple-Leaves-Using-Convolutional-Neural-Network-on-HSV-Segmented-Images
