@@ -1,0 +1,19 @@
+# Image processing (HSV conversion, thresholds, masks, boxes)
+opencv-python>=4.8
+numpy>=1.24
+
+# CNN models
+torch>=2.1
+torchvision>=0.16
+
+# Data loading and evaluation
+pillow>=10.0
+scikit-learn>=1.3
+pandas>=2.0
+
+# Plots and notebooks
+matplotlib>=3.7
+jupyter>=1.0
+
+# Tests
+pytest>=7.4

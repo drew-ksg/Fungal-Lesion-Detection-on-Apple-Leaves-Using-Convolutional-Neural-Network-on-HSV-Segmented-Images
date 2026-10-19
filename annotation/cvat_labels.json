@@ -1,0 +1,20 @@
+[
+  {
+    "name": "apple_scab",
+    "color": "#8b6f2e",
+    "type": "rectangle",
+    "attributes": []
+  },
+  {
+    "name": "black_rot",
+    "color": "#7a2e6b",
+    "type": "rectangle",
+    "attributes": []
+  },
+  {
+    "name": "cedar_apple_rust",
+    "color": "#e8871e",
+    "type": "rectangle",
+    "attributes": []
+  }
+]
