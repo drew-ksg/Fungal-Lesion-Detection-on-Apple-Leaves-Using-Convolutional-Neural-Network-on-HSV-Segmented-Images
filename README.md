@@ -10,23 +10,19 @@ CSUB Senior Project, 2026–2027
 
 ## What this project does
 
-Apple scab, cedar apple rust, and black rot leave lesions on apple leaves whose
-colors differ from healthy green tissue. This project tests whether **HSV color
-segmentation** helps a **CNN** find those lesions.
+This project will test whether HSV segmentation improves a CNN-based object detector’s ability to locate and identify fungal lesions on apple leaves. We use PlantVillage’s apple scab, black rot, cedar apple rust, and healthy categories.
 
-1. Take a leaf photo from the dataset.
-2. Convert it from RGB to HSV.
-3. Apply HSV thresholds (lower and upper limits on hue, saturation, and value)
-   for each disease to build a **binary mask**: matching pixels are white, all
-   others black.
-4. Apply the mask to the original photo so only suspected lesion regions remain,
-   and draw boxes around those regions.
-5. Feed the regions to a CNN, which checks whether each one is a lesion and
-   which disease it is.
-6. Highlight suspected lesions on the original photo.
+## Planned detection workflow
+*1. Load an original color apple-leaf image.
+*2. Convert the image to HSV.
+*3. Apply the selected HSV ranges and combine their results into a binary mask. Use the same preprocessing procedure for every image without using its known disease label to choose thresholds.
+*4. Apply the mask to the original image, preserving selected pixels in their original colors and making excluded pixels black.
+*5. Feed the full masked color image into a CNN-based object detector, which predicts lesion-box coordinates, disease labels, and confidence scores.
+*6. Draw the accepted predictions on the original image.
+During training, manually annotated lesion boxes and disease labels provide the reference answers. These annotations are stored separately from the images. Healthy images have no lesion boxes.
 
-**Baseline:** the same CNN trained on the plain photos with no HSV step. Both
-methods are scored on the same test images.
+**Baseline:** Train two instances of the same detector architecture: one on original color images and one on HSV-masked color images. Use the same image splits, reference annotations, and comparable training settings.
+Select each run’s checkpoint using validation performance, then compare the selected checkpoints on the same held-out test set.
 
 ## Repository layout
 
