@@ -50,7 +50,7 @@ apple-lesion-detection/
 Requires **Python 3.10 or newer** and **Git**.
 
 ```bash
-git clone https://github.com/<your-org>/apple-lesion-detection.git](https://github.com/drew-ksg/Fungal-Lesion-Detection-on-Apple-Leaves-Using-Convolutional-Neural-Network-on-HSV-Segmented-Images.git
+git clone https://github.com/drew-ksg/Fungal-Lesion-Detection-on-Apple-Leaves-Using-Convolutional-Neural-Network-on-HSV-Segmented-Images.git
 cd apple-lesion-detection
 
 python -m venv .venv
