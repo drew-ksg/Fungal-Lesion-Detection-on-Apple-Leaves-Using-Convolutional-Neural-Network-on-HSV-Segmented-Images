@@ -39,8 +39,8 @@ apple-lesion-detection/
 ├── outputs/                Figures and results (not committed)
 ├── scripts/                Environment check and dataset download
 ├── src/
-│   ├── hsv/                HSV thresholds, masks, candidate boxes
-│   ├── cnn/                Region classifier model
+│   ├── hsv/                HSV thresholds and masks; candidate boxes for demonstration
+│   ├── cnn/                Planned CNN-based detector, training, and inference
 │   └── eval/               IoU and lesion matching (found, missed, false alarms)
 └── tests/                  Unit tests (pytest)
 ```
@@ -50,7 +50,7 @@ apple-lesion-detection/
 Requires **Python 3.10 or newer** and **Git**.
 
 ```bash
-git clone https://github.com/<your-org>/apple-lesion-detection.git
+git clone https://github.com/<your-org>/apple-lesion-detection.git](https://github.com/drew-ksg/Fungal-Lesion-Detection-on-Apple-Leaves-Using-Convolutional-Neural-Network-on-HSV-Segmented-Images.git
 cd apple-lesion-detection
 
 python -m venv .venv
@@ -103,16 +103,7 @@ by leaf, so the same physical leaf never appears in both training and test sets.
 
 ## Run the HSV demo
 
-```bash
-python -m src.hsv.demo --synthetic   # no data needed
-python -m src.hsv.demo --image data/raw/plantvillage_apple/train/Apple___Black_rot/<file>.JPG
-python -m src.hsv.demo --image <rust leaf> --disease cedar_apple_rust
-```
-
-This saves `outputs/hsv_demo.png` with four panels: original, binary mask,
-masked picture, and candidate boxes. `--disease` uses only that disease's
-thresholds. The notebook `notebooks/01_hsv_demo.ipynb` walks through the same
-steps one cell at a time.
+The HSV demo displays the original image, binary mask, masked color image, and candidate boxes calculated from the mask. These candidate boxes are visualization aids, not predictions from a trained CNN detector or verified reference annotations.
 
 ![Black rot example](docs/img/hsv_example_black_rot.png)
 
@@ -122,9 +113,7 @@ picture, candidate boxes.*
 ### Known issue: scab thresholds
 
 Rust and black rot lesions are far from green in hue and separate cleanly.
-Scab lesions are olive-green, inside the healthy hue band, and differ mainly by
-being darker, so the scab range also selects shadowed healthy tissue. Tuning
-the scab range, or letting the CNN reject those regions, is an open task.
+Scab lesions are olive-green, inside the healthy hue band, and differ mainly by being darker, so the scab range also selects shadowed healthy tissue. Tuning the HSV ranges and measuring how preserved or removed image information affects detector performance remain open tasks.
 
 ## Run the tests
 
@@ -134,8 +123,7 @@ pytest -q
 
 ## Lesion labeling
 
-No public dataset we found has boxes around individual lesions, so we label
-them ourselves. See [`annotation/LABELING_GUIDE.md`](annotation/LABELING_GUIDE.md).
+PlantVillage provides images with disease labels but does not include the lesion bounding boxes that we need for our detector. We will annotate lesions on the original images using CVAT, including lesions that HSV preprocessing might miss. Both detector versions will use the same reference annotations. Healthy images will have no lesion boxes. See `annotation/LABELING_GUIDE.md` for the labeling procedure.
 
 ## Team roles
 
