@@ -13,12 +13,12 @@ CSUB Senior Project, 2026–2027
 This project will test whether HSV segmentation improves a CNN-based object detector’s ability to locate and identify fungal lesions on apple leaves. We use PlantVillage’s apple scab, black rot, cedar apple rust, and healthy categories.
 
 ## Planned detection workflow
-* 1. Load an original color apple-leaf image.
-* 2. Convert the image to HSV.
-* 3. Apply the selected HSV ranges and combine their results into a binary mask. Use the same preprocessing procedure for every image without using its known disease label to choose thresholds.
-* 4. Apply the mask to the original image, preserving selected pixels in their original colors and making excluded pixels black.
-* 5. Feed the full masked color image into a CNN-based object detector, which predicts lesion-box coordinates, disease labels, and confidence scores.
-* 6. Draw the accepted predictions on the original image.
+* Load an original color apple-leaf image.
+* Convert the image to HSV.
+* Apply the selected HSV ranges and combine their results into a binary mask. Use the same preprocessing procedure for every image without using its known disease label to choose thresholds.
+* Apply the mask to the original image, preserving selected pixels in their original colors and making excluded pixels black.
+* Feed the full masked color image into a CNN-based object detector, which predicts lesion-box coordinates, disease labels, and confidence scores.
+* Draw the accepted predictions on the original image.
 During training, manually annotated lesion boxes and disease labels provide the reference answers. These annotations are stored separately from the images. Healthy images have no lesion boxes.
 
 **Baseline:** Train two instances of the same detector architecture: one on original color images and one on HSV-masked color images. Use the same image splits, reference annotations, and comparable training settings.
