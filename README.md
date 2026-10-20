@@ -101,25 +101,11 @@ Images are saved to `data/raw/plantvillage_apple/{train,val,test}/<class>/`
 (about 70/15/15). `manifest.csv` records each image's `leaf_id`; splits are made
 by leaf, so the same physical leaf never appears in both training and test sets.
 
-## Run the HSV demo
-
-The HSV demo displays the original image, binary mask, masked color image, and candidate boxes calculated from the mask. These candidate boxes are visualization aids, not predictions from a trained CNN detector or verified reference annotations.
-
-![Black rot example](docs/img/hsv_example_black_rot.png)
-
-*Black rot thresholds on a PlantVillage leaf: original, binary mask, masked
-picture, candidate boxes.*
-
 ### Known issue: scab thresholds
 
 Rust and black rot lesions are far from green in hue and separate cleanly.
 Scab lesions are olive-green, inside the healthy hue band, and differ mainly by being darker, so the scab range also selects shadowed healthy tissue. Tuning the HSV ranges and measuring how preserved or removed image information affects detector performance remain open tasks.
 
-## Run the tests
-
-```bash
-pytest -q
-```
 
 ## Lesion labeling
 
@@ -134,13 +120,6 @@ PlantVillage provides images with disease labels but does not include the lesion
 | Demetrio Rodriguez Sandoval | CNN models |
 | Jonathan Torres | Evaluation and integration |
 
-## Working together
-
-- Work on a branch (`git checkout -b arvin/hsv-thresholds`), then open a pull
-  request into `main`.
-- Never commit datasets, model weights, or large outputs; `.gitignore` covers
-  the usual folders.
-- Track tasks in GitHub Issues.
 
 ## Data source
 
