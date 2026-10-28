@@ -1,0 +1,30 @@
+# python cache files
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# virtual environments and local settings
+.venv/
+venv/
+env/
+.env
+.vscode/
+
+# downloaded and processed dataset files
+data/raw/
+data/processed/
+data/cache/
+
+# trained models and generated results
+models/
+outputs/
+*.pt
+*.pth
+*.ckpt
+
+# notebook checkpoints
+.ipynb_checkpoints/
+
+# operating-system files
+.DS_Store
+Thumbs.db
