@@ -36,7 +36,7 @@ cv2.imshow("Original Image", image)
 
 
 lower_dark = np.array([0, 0, 0])
-upper_dark = np.array([179, 255, 70])
+upper_dark = np.array([179, 255, 50])
 
 mask = cv2.inRange(hsv_image, lower_dark, upper_dark)
 result = cv2.bitwise_and(image, image, mask=mask)
