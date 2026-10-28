@@ -177,3 +177,4 @@ class AppleLeafDataset(Dataset):
             "boxes": torch.zeros((0, 4), dtype=torch.float32),
             "box_labels": torch.zeros((0,), dtype=torch.long),
         }
+    
