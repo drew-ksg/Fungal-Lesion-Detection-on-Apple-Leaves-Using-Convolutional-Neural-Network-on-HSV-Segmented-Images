@@ -37,7 +37,7 @@ _IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
 @dataclass(frozen=True) #once an ImageRecord is created, its values cannot be changed
 class ImageRecord: 
     """Each IR represents one image from the dataset and its info."""
-#fields stored in ImageRecord
+    #fields stored in ImageRecord
     path: Path #sores the location of the image file
     label_name: str #disease name
     label: int #numeric label for the disease 
@@ -79,3 +79,101 @@ def _resolve_path(raw_path: str, dataset_dir: Path) -> Path:
         f"image listed in manifest was not found: {raw_path!r}. "
         f"Checked relative to {dataset_dir} and the current directory."
     )
+
+def _records_from_manifest(
+    manifest: Path,
+    dataset_dir: Path,
+    split: str | None,
+) -> list[ImageRecord]:
+    records: list[ImageRecord] = []
+    with manifest.open(newline="", encoding="utf-8") as stream:
+        for row in csv.DictReader(stream):
+            if split is not None and row.get("split") != split:
+                continue
+
+            raw_label = row.get("label", "")
+            label_name = _FOLDER_TO_LABEL.get(raw_label, raw_label.lower())
+            if label_name not in CLASS_TO_INDEX:
+                raise ValueError(f"unsupported image label in manifest: {raw_label!r}")
+
+            records.append(
+                ImageRecord(
+                    path=_resolve_path(row["path"], dataset_dir),
+                    label_name=label_name,
+                    label=CLASS_TO_INDEX[label_name],
+                    split=row.get("split") or None,
+                    leaf_id=row.get("leaf_id") or None,
+                )
+            )
+    return records
+
+#discover images when a manifest hasn't been generated.
+def _records_from_folders(dataset_dir: Path, split: str | None) -> list[ImageRecord]:
+    split_dirs = [dataset_dir / split] if split else sorted(
+        path for path in dataset_dir.iterdir() if path.is_dir()
+    )
+    records: list[ImageRecord] = []
+    for split_dir in split_dirs:
+        if not split_dir.exists():
+            continue
+        for class_dir in sorted(path for path in split_dir.iterdir() if path.is_dir()):
+            label_name = _label_from_folder(class_dir.name)
+            for image_path in sorted(class_dir.iterdir()):
+                if image_path.suffix.lower() in _IMAGE_EXTENSIONS:
+                    records.append(
+                        ImageRecord(
+                            path=image_path.resolve(),
+                            label_name=label_name,
+                            label=CLASS_TO_INDEX[label_name],
+                            split=split_dir.name,
+                        )
+                    )
+    return records
+
+
+#PyTorch dataset for images. each item is a dictionary containing the label and empty box
+#fields. the fields make the interface ready for CVAT annotations
+class AppleLeafDataset(Dataset):
+
+    def __init__(
+        self,
+        dataset_dir: str | Path = "data/raw/plantvillage_apple",
+        split: str | None = None,
+        transform: Callable | None = None,
+    ) -> None:
+        self.dataset_dir = Path(dataset_dir)
+        self.split = split
+        self.transform = transform
+
+        if not self.dataset_dir.exists():
+            raise FileNotFoundError(f"dataset directory does not exist: {self.dataset_dir}")
+
+        manifest = self.dataset_dir / "manifest.csv"
+        if manifest.exists():
+            self.records = _records_from_manifest(manifest, self.dataset_dir, split)
+        else:
+            self.records = _records_from_folders(self.dataset_dir, split)
+
+        if not self.records:
+            split_text = f" for split {split!r}" if split else ""
+            raise ValueError(f"no supported images found in {self.dataset_dir}{split_text}")
+
+    def __len__(self) -> int:
+        return len(self.records)
+
+    def __getitem__(self, index: int) -> dict:
+        record = self.records[index]
+        image = Image.open(record.path).convert("RGB")
+        if self.transform is not None:
+            image = self.transform(image)
+
+        return {
+            "image": image,
+            "label": torch.tensor(record.label, dtype=torch.long),
+            "label_name": record.label_name,
+            "path": str(record.path),
+            "leaf_id": record.leaf_id,
+            #these remain empty until CVAT annotations
+            "boxes": torch.zeros((0, 4), dtype=torch.float32),
+            "box_labels": torch.zeros((0,), dtype=torch.long),
+        }
