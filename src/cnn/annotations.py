@@ -118,7 +118,14 @@ def read_yolo_labels(
         label_name = CVAT_CLASS_TO_LABEL[class_id]
         annotations.append(
             LesionAnnotation(
-                box=_yolo_box_to_pixels(*values, image_width, image_height),
+                box=_yolo_box_to_pixels(
+                    values[0],  # x center
+                    values[1],  # y center
+                    values[2],  # box width
+                    values[3],  # box height
+                    image_width,
+                    image_height,
+                ),
                 label_name=label_name,
                 label=CLASS_TO_INDEX[label_name],
             )
