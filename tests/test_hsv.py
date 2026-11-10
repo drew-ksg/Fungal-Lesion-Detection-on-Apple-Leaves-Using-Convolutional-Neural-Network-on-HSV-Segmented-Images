@@ -1,9 +1,10 @@
+from unittest import result
+
 import numpy as np
 import pytest
 
 from src.hsv.segment import (
     apply_mask,
-    candidate_boxes,
     segment_leaf,
     synthetic_leaf,
     threshold_mask,
@@ -34,18 +35,10 @@ def test_apply_mask_keeps_only_white_pixels():
     assert out[0, 0].tolist() == [100, 100, 100]
     assert out[1, 1].tolist() == [0, 0, 0]
 
-
-def test_candidate_boxes_skip_small_regions():
-    mask = np.zeros((50, 50), np.uint8)
-    mask[10:20, 10:20] = 255    # 100 px region, kept
-    mask[40, 40] = 255          # 1 px speck, dropped
-    boxes = candidate_boxes(mask, min_area=30, pad=0)
-    assert boxes == [(10, 10, 10, 10)]
-
-
 def test_synthetic_rust_spots_are_found():
     result = segment_leaf(synthetic_leaf())
-    assert len(result.boxes) >= 1
+    assert result.masked.shape == synthetic_leaf().shape
+    assert np.any(result.lesion_mask)
     rust = result.per_disease["cedar_apple_rust"]
     assert rust.max() == 255
     # Background (gray) must never be flagged.

@@ -55,8 +55,8 @@ def main() -> int:
     try:
         from src.hsv.segment import segment_leaf, synthetic_leaf
 
-        n = len(segment_leaf(synthetic_leaf()).boxes)
-        print(f"HSV test  OK, found {n} candidate regions on the synthetic leaf")
+        result = segment_leaf(synthetic_leaf())
+        print(f"HSV test  OK, created masked image with shape {result.masked.shape}")
     except Exception as e:  # noqa: BLE001
         print(f"HSV test  FAILED: {e}")
         ok = False
