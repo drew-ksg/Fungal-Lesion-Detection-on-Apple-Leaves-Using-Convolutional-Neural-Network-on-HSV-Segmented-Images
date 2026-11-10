@@ -13,6 +13,8 @@ import torch #the machine-learning library used by the CNN
 from PIL import Image #imports image tool from Pillow, a python image-processing library
 from torch.utils.data import Dataset
 
+from .annotations import read_yolo_labels #imports yolo reading function
+
 #the four image-level labels supplied by PlantVillage
 IMAGE_CLASSES = (
     "apple_scab",
@@ -33,6 +35,20 @@ _FOLDER_TO_LABEL = {
 }
 #the loader will accept files ending in
 _IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
+
+def _build_label_index(labels_dir: Path) -> dict[str, Path]:
+    """Finds YOLO label files and match them by image filename. for example, 
+    .jpg can be matched with .txt"""
+    if not labels_dir.exists():
+        return {}
+
+    label_index: dict[str, Path] = {}
+    for label_path in labels_dir.rglob("*.txt"):
+        image_name = label_path.stem
+        if image_name in label_index:
+            raise ValueError(f"multiple annotation files found for image: {image_name}")
+        label_index[image_name] = label_path
+    return label_index
 
 @dataclass(frozen=True) #once an ImageRecord is created, its values cannot be changed
 class ImageRecord: 
@@ -131,8 +147,8 @@ def _records_from_folders(dataset_dir: Path, split: str | None) -> list[ImageRec
     return records
 
 
-#PyTorch dataset for images. each item is a dictionary containing the label and empty box
-#fields. the fields make the interface ready for CVAT annotations
+# PyTorch dataset for images. each item contains the image label and CVAT lesion boxes
+# missing annotation files produce empty boxes
 class AppleLeafDataset(Dataset):
 
     def __init__(
@@ -140,10 +156,14 @@ class AppleLeafDataset(Dataset):
         dataset_dir: str | Path = "data/raw/plantvillage_apple",
         split: str | None = None,
         transform: Callable | None = None,
+        labels_dir: str | Path = "data/labels", #tells the loader where the CVAT annotation files are located
+
     ) -> None:
         self.dataset_dir = Path(dataset_dir)
         self.split = split
         self.transform = transform
+        self.labels_dir = Path(labels_dir)
+        self.label_index: dict[str, Path] = _build_label_index(self.labels_dir)
 
         if not self.dataset_dir.exists():
             raise FileNotFoundError(f"dataset directory does not exist: {self.dataset_dir}")
@@ -164,8 +184,25 @@ class AppleLeafDataset(Dataset):
     def __getitem__(self, index: int) -> dict:
         record = self.records[index]
         image = Image.open(record.path).convert("RGB")
+        width, height = image.size
         if self.transform is not None:
             image = self.transform(image)
+
+        label_path = self.label_index.get(record.path.stem)
+        annotations = (
+            read_yolo_labels(label_path, width, height)
+            if label_path is not None
+            else []
+        )
+
+        boxes = torch.tensor(
+            [annotation.box for annotation in annotations],
+            dtype=torch.float32,
+        ).reshape(-1, 4)
+        box_labels = torch.tensor(
+            [annotation.label for annotation in annotations],
+            dtype=torch.long,
+        )
 
         return {
             "image": image,
@@ -173,8 +210,7 @@ class AppleLeafDataset(Dataset):
             "label_name": record.label_name,
             "path": str(record.path),
             "leaf_id": record.leaf_id,
-            #these remain empty until CVAT annotations
-            "boxes": torch.zeros((0, 4), dtype=torch.float32),
-            "box_labels": torch.zeros((0,), dtype=torch.long),
+            "boxes": boxes,
+            "box_labels": box_labels,
         }
     
