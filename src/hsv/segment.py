@@ -1,4 +1,4 @@
-"""Convert a leaf picture into HSV masks and candidate boxes.
+"""Convert a leaf picture into HSV masks and a masked color image.
 made this so that the functions in this file can be imported without opening a window or
 depending on a specific path.
 """
@@ -82,29 +82,6 @@ def apply_mask(bgr: np.ndarray, mask: np.ndarray) -> np.ndarray:
     """Keep the original pixels where the mask is white."""
     return cv2.bitwise_and(bgr, bgr, mask=mask)
 
-
-def candidate_boxes(
-    mask: np.ndarray, min_area: int = 30, pad: int = 4
-) -> list[tuple[int, int, int, int]]:
-    """Group mask pixels into padded candidate boxes."""
-    height, width = mask.shape[:2]
-    count, _, stats, _ = cv2.connectedComponentsWithStats(mask)
-    boxes = []
-
-    for component in range(1, count):
-        x, y, box_width, box_height, area = stats[component]
-        if area < min_area:
-            continue
-
-        x0 = max(0, x - pad)
-        y0 = max(0, y - pad)
-        x1 = min(width, x + box_width + pad)
-        y1 = min(height, y + box_height + pad)
-        boxes.append((int(x0), int(y0), int(x1 - x0), int(y1 - y0)))
-
-    return boxes
-
-
 @dataclass
 class SegmentationResult:
     """Stores the results produced by the full HSV process."""
@@ -113,16 +90,18 @@ class SegmentationResult:
     leaf_mask: np.ndarray
     lesion_mask: np.ndarray
     masked: np.ndarray
-    boxes: list[tuple[int, int, int, int]]
     per_disease: dict[str, np.ndarray] = field(default_factory=dict)
 
 
 def segment_leaf(
     bgr: np.ndarray,
     disease_ranges: dict[str, list[HSVRange]] | None = None,
-    min_area: int = 30,
 ) -> SegmentationResult:
-    """Run HSV conversion, masking, cleaning, and candidate box creation."""
+    """Combines HSV ranges and return a masked BGR image at its original size.
+
+    Uses all ranges for both training and inference, not the known disease
+    label. Per-disease masks are color-filter diagnostics, not diagnoses.
+    """
     ranges = DISEASE_RANGES if disease_ranges is None else disease_ranges
     hsv = to_hsv(bgr)
 
@@ -147,23 +126,8 @@ def segment_leaf(
         leaf_mask=leaf,
         lesion_mask=lesions,
         masked=apply_mask(bgr, lesions),
-        boxes=candidate_boxes(lesions, min_area=min_area),
         per_disease=per_disease,
     )
-
-
-def draw_boxes(
-    bgr: np.ndarray,
-    boxes: list[tuple[int, int, int, int]],
-    color: tuple[int, int, int] = (0, 0, 255),
-    thickness: int = 2,
-) -> np.ndarray:
-    """Return a copy of the image with boxes drawn on it."""
-    output = bgr.copy()
-    for x, y, width, height in boxes:
-        cv2.rectangle(output, (x, y), (x + width, y + height), color, thickness)
-    return output
-
 
 def synthetic_leaf(size: int = 256, seed: int = 0) -> np.ndarray:
     """Create a fake leaf with orange spots for tests without real data."""
